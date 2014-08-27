@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>OSMEX3D Area editor</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+        
+        <script src="threejs/three.min.js"></script>
+        <script src="jquery/jquery-1.9.1.js"></script>
+
+        <script src="scripts/BoundingBox.js"></script>
+        <script src="scripts/ObjectScene.js"></script>
+        <script src="scripts/InterfaceScene.js"></script>
+        <script src="scripts/OsmArea.js"></script>
+        <script src="scripts/Camera.js"></script>
+        <script src="scripts/CameraController.js"></script>
+        <script src="scripts/Block.js"></script>
+        <script src="scripts/Cube.js"></script>
+        <script src="scripts/ScaleCube.js"></script>
+        <script src="scripts/Arrow.js"></script>
+        <script src="scripts/SizerArrow.js"></script>
+        <script src="scripts/SizerGizmo.js"></script>
+        <script src="scripts/MovingGizmo.js"></script>
+        <script src="scripts/MovingGizmoPlane.js"></script>
+        <script src="scripts/MovingArrow.js"></script>
+        <script src="scripts/Torus.js"></script>
+        <script src="scripts/RotationTorus.js"></script>
+        <script src="scripts/RotationGizmoOverlay.js"></script>
+        <script src="scripts/RotationGizmo.js"></script>
+        <script src="scripts/BoxBuilder.js"></script>
+        <script src="scripts/SketchType.js"></script>
+        <script src="scripts/SketchFactory.js"></script>
+        <script src="scripts/AjaxRequests.js"></script>
+        
+        <style>
+            body {
+                font-family: Monospace;
+                background-color: white;
+                margin: 0px;
+                overflow: hidden;
+            }
+            
+            #topbar {
+                position:absolute; 
+                top:10px;               
+            }
+            #righttopbar {
+                position:absolute; 
+            }   
+
+            #dragging {
+                background-image: url('img/48x48/dragging.png');              
+            }
+            #dragging:hover {
+                background-image: url('img/48x48/dragging_over.png');              
+            }                         
+            #dragging.selected
+            {
+                background-image: url('img/48x48/dragging_pressed.png');              
+            }
+
+            #moving {
+                background-image: url('img/48x48/moving.png');             
+            }
+            #moving:hover {
+                background-image: url('img/48x48/moving_over.png');              
+            }                        
+            #moving.selected
+            {
+                background-image: url('img/48x48/moving_pressed.png');             
+            }
+
+            #scaling {
+                background-image: url('img/48x48/scaling.png');   
+            }
+            #scaling:hover {
+                background-image: url('img/48x48/scaling_over.png');  
+            }                        
+            #scaling.selected
+            {
+                background-image: url('img/48x48/scaling_pressed.png');   
+            }
+
+            #rotating {
+                background-image: url('img/48x48/rotating.png');   
+            }
+            #rotating:hover {
+                background-image: url('img/48x48/rotating_over.png');    
+            }                        
+            #rotating.selected
+            {
+                background-image: url('img/48x48/rotating_pressed.png');
+            }
+
+            #deleting {
+                background-image: url('img/48x48/deleting.png');
+            }
+            #deleting:hover {
+                background-image: url('img/48x48/deleting_over.png');
+            }                        
+            #deleting.selected
+            {
+                background-image: url('img/48x48/deleting_pressed.png');
+            }
+
+            #build_box {
+                background-image: url('img/48x48/build_box.png');
+            }
+            #build_box:hover {
+                background-image: url('img/48x48/build_box_over.png');
+            }                        
+            #build_box.selected
+            {
+                background-image: url('img/48x48/build_box_pressed.png');
+            }
+                                  
+            #save {
+                background-image: url('img/save.png');               
+            }
+            #save:hover {
+                background-image: url('img/save_hovered.png');               
+            }
+            
+            #cancel {
+                background-image: url('img/cancel.png');               
+            }
+            #cancel:hover {
+                background-image: url('img/cancel_hovered.png');               
+            } 
+                                  
+        </style>
+    </head>
+    <body>
+
+        <div id="topbar" class="map_controls" style="visibility:hidden;display:inline;float:right;">
+            <div id ="default" style="float:left;">
+            <div id="dragging" class="group1" style="width:48px;height:48px;float:left;">
+                &nbsp;
+            </div>
+            </div>
+            
+            <div id="tochange" style="float:left;">
+            <div id="moving" class="group1" style="width:48px;height:48px;float:left;">
+                &nbsp; 
+            </div>
+            <div id="scaling" class="group1" style="width:48px;height:48px;float:left;">
+                &nbsp;
+            </div>
+            <div id="rotating" class="group1" style="width:48px;height:48px;float:left;">
+                &nbsp;
+            </div>
+            <div id="deleting" class="group1" style="width:48px;height:48px;float:left;">
+                &nbsp;
+            </div>
+            </div>
+            <div id="build" style="float:left;">
+            <div id="build_box" class="group1" style="width:48px;height:48px;float:left;">
+                &nbsp;
+            </div>
+        </div>
+        </div>
+
+            <div id="righttopbar" class="map_controls" style="width:250px;visibility:hidden;display:block;text-align:left;">
+            <div id="save" class="save" style="width:100px;height:40px;float:left;">
+                &nbsp; 
+            </div>
+            <div id="cancel" class="cancel" style="width:100px;height:40px;float:left;">
+                &nbsp; 
+            </div>
+            <br>
+            <br>
+            <br>
+            <label><input type="checkbox" id="BBox" onchange="addBoundingBox();" /> Show bounding boxes</label>
+            <br>
+            <label><input type="checkbox" checked id="showShadows" onchange="showShadows();" /> Show shadows</label>
+        </div>
+        
+        <script type="text/javascript">
+
+            var SCREEN_WIDTH = window.innerWidth;
+            var SCREEN_HEIGHT = window.innerHeight;
+            var SCREEN_FOV = 45;
+            
+            // temporary solution:
+            var MIN_LON = parent.EDIT_MIN_LON;
+            var MIN_LAT = parent.EDIT_MIN_LAT;
+            var MAX_LON = parent.EDIT_MAX_LON;
+            var MAX_LAT = parent.EDIT_MAX_LAT;
+
+            var container;
+
+            var renderer;
+            var camera;
+            var cameraController, projector;
+            var objectScene, interfaceScene;
+
+            var mouse = new THREE.Vector2(0, 0);
+
+            var CLICKED = [null, null];
+
+            var PICKED, SELECTED, DRAGGING, SIZING, ROTATING, SCALING, MOVING, BUILDING;
+
+            var offsetVector = new THREE.Vector3();
+
+            var osmArea, groundPlane;
+
+            var sizerGizmo, rotationGizmo, movingGizmo, actionPlane;
+
+            var boxBuilder, sketchFactory;
+            
+            var objectLight, interfaceLight, shadowLight;
+
+            var arrowMode, objectType;
+            
+            $(document).ready(function() {
+                
+
+                            // preload images
+                            preload(['img/48x48/dragging.png','img/48x48/dragging_over.png','img/48x48/dragging_pressed.png',
+                     'img/48x48/moving.png','img/48x48/moving_over.png','img/48x48/moving_pressed.png', 
+                     'img/48x48/scaling.png','img/48x48/scaling_over.png','img/48x48/scaling_pressed.png',
+                     'img/48x48/rotating.png','img/48x48/rotating_over.png','img/48x48/rotating_pressed.png',
+                     'img/48x48/deleting.png','img/48x48/deleting_over.png','img/48x48/deleting_pressed.png',
+                     'img/48x48/build_box.png','img/48x48/build_box_over.png','img/48x48/build_box_pressed.png',
+                     'img/publish.png','img/publish_hovered.png','img/save.png','img/save_hovered.png','img/cancel.png','img/cancel_hovered.png'
+                            ]);
+
+                    function preload(images) {
+                            var div = document.createElement("div");
+                            var s = div.style;
+                            s.position = "absolute";
+                            s.top = s.left = 0;
+                            s.visibility = "hidden";
+                            document.body.appendChild(div);
+                            div.innerHTML = "<img src=\"" + images.join("\" /><img src=\"") + "\" />";
+                    }
+
+                $("#topbar").css({
+                    "left": (window.innerWidth / 2) - ($("#topbar").width() / 2) + "px",
+                    "visibility": "visible"
+                });
+
+                $("#tochange").css({
+                   "margin-left": 5 + "px" 
+                });
+                $("#build").css({
+                   "margin-left": 5 + "px" 
+                });
+
+                $("#righttopbar").css({
+                    "right": '0px',//(window.innerWidth) - ($("#topbar").width()) + "px",
+                    "top": ($("#topbar").height() / 2) + "px",
+                    "visibility": "visible"
+                });
+
+                $(".group1").click(function() {
+                    sizerGizmo.setTarget(null);
+                    movingGizmo.setTarget(null);
+                    rotationGizmo.setTarget(null);
+                    $(".selected").removeClass("selected");
+                    $(this).addClass("selected");
+                    setArrowsType(this);
+                });
+
+                $(".save").click(function() {
+                    saveScene();
+                    parent.disableMapEditing(); // switching to the Landscape
+                });
+
+                $(".cancel").click(function() {
+                    parent.disableMapEditing(); // switching to the Landscape
+                });
+                
+                $('.map_controls').mouseenter(function(){
+                    cameraController.enabled=false;
+                    document.removeEventListener('mousemove', onDocumentMouseMove, false);
+                    document.removeEventListener('mousedown', onDocumentMouseDown, false);
+                    document.removeEventListener('mouseup', onDocumentMouseUp, false);
+                });
+                $('.map_controls').mouseleave(function(){
+                    cameraController.enabled=true;
+                    document.addEventListener('mousemove', onDocumentMouseMove, false);
+                    document.addEventListener('mousedown', onDocumentMouseDown, false);
+                    document.addEventListener('mouseup', onDocumentMouseUp, false);
+                });
+
+                init();
+                animate();
+            });
+
+            function init() {
+
+                container = document.createElement('div');
+                document.body.appendChild(container);
+                
+                // instead of stop propagation and prevent default
+                document.onselectstart=function(){return false;};
+                
+                renderer = new THREE.WebGLRenderer({antialias: true});
+
+                camera = new OSMEX.Camera(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_FOV, 1, 4000, 1, 4000);
+                camera.rotation.x -= Math.PI / 4;
+                camera.position.z = 100;
+                camera.position.y = 300;
+
+                cameraController = new OSMEX.CameraController(camera);
+                cameraController.addEventListener('change', onCameraChange);
+                cameraController.maxPolarAngle = Math.PI / 2.1; // limit vertical rotation to prevent rotating under ground
+
+                objectScene = new OSMEX.ObjectScene();
+                interfaceScene = new OSMEX.InterfaceScene(camera);
+
+                objectScene.fog = new THREE.Fog(0xccf2ff, 1, 4000);
+
+                objectScene.add(new THREE.AmbientLight(0x3f3f3f));
+                interfaceScene.add(new THREE.AmbientLight(0x3f3f3f));
+
+                objectLight = new THREE.DirectionalLight(0xffffff);
+                objectLight.position = camera.position;
+                objectLight.target.position = cameraController.target;
+                objectScene.add(objectLight);
+                
+                shadowLight = new THREE.DirectionalLight();
+                shadowLight.position.set(0, 1000, 0);
+                shadowLight.onlyShadow = true;
+                shadowLight.castShadow = true;
+                shadowLight.shadowCameraNear = camera.near;
+                shadowLight.shadowCameraFar = camera.far;
+                shadowLight.shadowCameraFov = SCREEN_FOV;
+                shadowLight.shadowBias = 0;
+                shadowLight.shadowDarkness = 0.5;
+                shadowLight.shadowMapWidth = 2048;
+                shadowLight.shadowMapHeight = 2048;
+                objectScene.add(shadowLight);
+
+                interfaceLight = new THREE.DirectionalLight(0xffffff);
+                interfaceLight.position = camera.position;
+                interfaceLight.target.position = cameraController.target;
+                interfaceScene.add(interfaceLight);
+
+                // GROUND
+                osmArea = new OSMEX.OsmArea(MIN_LON, MIN_LAT, MAX_LON, MAX_LAT);
+                objectScene.add(osmArea);
+
+                groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0));
+                objectScene.add(groundPlane);
+
+                sizerGizmo = new OSMEX.SizerGizmo();
+                interfaceScene.add(sizerGizmo);
+
+                rotationGizmo = new OSMEX.RotationGizmo();
+                interfaceScene.add(rotationGizmo);
+
+                movingGizmo = new OSMEX.MovingGizmo();
+                interfaceScene.add(movingGizmo);
+
+                boxBuilder = new OSMEX.BoxBuilder();
+                objectScene.add(boxBuilder);
+
+                sketchFactory = new OSMEX.SketchFactory();
+                objectScene.add(sketchFactory);
+
+                actionPlane = new THREE.Plane();
+
+                projector = new THREE.Projector();
+
+                // RENDERER
+                renderer.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
+                renderer.setClearColor(objectScene.fog.color, 1);
+                renderer.autoClear = false;
+                
+                renderer.shadowMapEnabled = true;
+                renderer.shadowMapType = THREE.PCFShadowMap;
+
+                container.appendChild(renderer.domElement);
+
+                document.addEventListener('mousemove', onDocumentMouseMove, false);
+                document.addEventListener('mousedown', onDocumentMouseDown, false);
+                document.addEventListener('mouseup', onDocumentMouseUp, false);
+                window.addEventListener('resize', onWindowResize, false);
+                
+                getBuildings(MIN_LON, MIN_LAT, MAX_LON, MAX_LAT, function(json)
+                {
+                    var ob = jQuery.parseJSON(json);
+
+                    for (var i = 0; i < ob.builds.length; i++) {
+                        
+                        var loadBuildingFunc = function(building) { return function(obj) {
+
+                            obj.id = building.id;
+                            obj.scale = new THREE.Vector3 (parseFloat(building.scaleX)*1.5, parseFloat(building.scaleY),parseFloat(building.scaleZ)*1.5);
+                            obj.rotation = new THREE.Vector3 (parseFloat(building.rotationX), parseFloat(building.rotationY),parseFloat(building.rotationZ));
+                            obj.position = osmArea.LonLatHeightToXyz(parseFloat(building.positionLon), parseFloat(building.positionLat), parseFloat(building.positionHeight));
+                            obj.TypeID = parseFloat(building.TypeID);
+                            obj.isCreated = 0;
+                            objectScene.add(obj);
+                            
+                        } }(ob.builds[i]);
+
+                        sketchFactory.createObject(ob.builds[i].TypeID, loadBuildingFunc);
+                    }
+                });
+            }
+
+            function saveScene() {
+                
+               var objArray = new Array();
+
+               for (var i = 0, l = objectScene.children.length; i < l; i++) {
+
+                    var obj = objectScene.children[i];
+
+                    if (obj instanceof OSMEX.Block) {
+
+                        if (obj.isDeleted == 1) {
+
+                            if (obj.isCreated == 0) objArray.push(obj);
+                        }
+                        else if (obj.isCreated == 1 ) {
+
+                            objArray.push(obj);
+                        }
+                        else if (obj.isCreated == 0 && obj.isModified === 1) {
+
+                            objArray.push(obj);
+                        }
+                    }
+                }
+
+                ajaxPostScene(objArray, osmArea);
+            }
+
+            function addBoundingBox() {
+                
+                for (var i = 0, l = objectScene.children.length; i < l; i++) {
+                    
+                    var obj = objectScene.children[i];
+
+                    if (obj.bbox && obj.visible) {
+
+                        obj.bbox.setVisibility($("#BBox").prop("checked"));
+                    }
+                }
+            }
+            
+            function showShadows() {
+                
+                renderer.shadowMapEnabled = $("#showShadows").prop("checked");
+                
+                if (!renderer.shadowMapEnabled) renderer.clearTarget( shadowLight.shadowMap );
+            }
+
+            function setArrowsType(element) {
+                
+                arrowMode = $(element).attr('id');
+                
+                if (arrowMode === "build_box") {
+                    
+                    boxBuilder.startBuild();
+                }
+                else {
+                    
+                    boxBuilder.finishBuild();
+                }
+            }
+
+            function onWindowResize() {
+
+                camera.setSize(window.innerWidth, window.innerHeight);
+                camera.updateProjectionMatrix();
+
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            }
+
+            function getPickedObject() {
+
+                function getFirstSuitableObject(raycaster, objects, recursive) {
+
+                    var intersects = raycaster.intersectObjects(objects, recursive);
+
+                    if (intersects.length > 0) {
+
+                        for (i = 0; i < intersects.length; i++) {
+
+                            if (intersects[i].object.parent.name === "RotationGizmoOverlay") {
+                                if (i + 1 < intersects.length && intersects[i + 1].object.parent.name === "RotationTorus")
+                                    i += 1;
+                                else if (i + 1 < intersects.length)
+                                    continue;
+
+                                return null;
+                            }
+
+                            var intersector = intersects[i];
+
+                            if (intersector.object.pickable && intersector.object.visible) {
+
+                                return intersector.object;
+                            }
+                        }
+                    }
+
+                    return null;
+                }
+
+                var vector = new THREE.Vector3(mouse.x, mouse.y, 1);
+                projector.unprojectVector(vector, camera);
+
+                var raycaster = new THREE.Raycaster(camera.position, vector.sub(camera.position).normalize());
+
+                var pickedObject = getFirstSuitableObject(raycaster, interfaceScene.children, true);
+
+                if (pickedObject === null) {
+
+                    pickedObject = getFirstSuitableObject(raycaster, objectScene.children);
+                }
+
+                return pickedObject;
+            }
+
+
+            function onDocumentMouseMove(event) {
+
+                event.preventDefault();
+
+                mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+                mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+                boxBuilder.onMouseMove(mouse);
+                
+                sketchFactory.onMouseMove(mouse);
+        
+                if (DRAGGING) {
+                    
+                    var vector = new THREE.Vector3(mouse.x, mouse.y, 0.5);
+                    projector.unprojectVector(vector, camera);
+                    var ray = new THREE.Ray(camera.position, vector.sub(camera.position).normalize());
+                    var intersectPoint = ray.intersectPlane(groundPlane);
+                    
+                    if (intersectPoint !== undefined) {
+                        
+                        DRAGGING.position.copy(intersectPoint.sub(offsetVector));
+                    }
+                }
+                else if (SIZING) {
+                    
+                    var vector = new THREE.Vector3(mouse.x, mouse.y, 0.5);
+                    projector.unprojectVector(vector, camera);
+                    var ray = new THREE.Ray(camera.position, vector.sub(camera.position).normalize());
+                    var intersectPoint = ray.intersectPlane(actionPlane);
+
+                    if (intersectPoint !== undefined) {
+
+                        intersectPoint.sub(new THREE.Vector3().getPositionFromMatrix(SIZING.matrixWorld));
+                        intersectPoint.multiplyScalar(1.0 / SIZING.parent.scale.x); // to compensate changing scale on changing distance
+                        SIZING.trackSizing(intersectPoint);
+                    }
+                }
+                else if (MOVING) {
+                    
+                    var vector = new THREE.Vector3(mouse.x, mouse.y, 1);
+                    projector.unprojectVector(vector, camera);
+                    var ray = new THREE.Ray(camera.position, vector.sub(camera.position).normalize());
+                    var intersectPoint = ray.intersectPlane(actionPlane);
+
+                    if (intersectPoint !== undefined) {
+
+                        intersectPoint.sub(offsetVector);
+                        MOVING.setPosition(intersectPoint);
+
+                    }
+                }
+                else if (SCALING) {
+                    
+                    var mouseX = (mouse.x * SCREEN_WIDTH / 2) / 10;
+                    var sizingPos = projector.projectVector(new THREE.Vector3().getPositionFromMatrix(SCALING.matrixWorld).clone(), camera);
+                    sizingPos.x = (sizingPos.x * SCREEN_WIDTH / 2) / 10;
+                    var len = mouseX - sizingPos.x;
+
+                    SCALING.setScale(len);
+                }
+                else if (ROTATING) {
+                    
+                    var vector = new THREE.Vector3(mouse.x, mouse.y, 0.5);
+                    projector.unprojectVector(vector, camera);
+                    var ray = new THREE.Ray(camera.position, vector.sub(camera.position).normalize());
+                    var intersectPoint = ray.intersectPlane(actionPlane);
+
+                    if (intersectPoint === undefined) {
+                        alert("RotationEnd plane intersection problem!");
+                    }
+
+                    intersectPoint.sub(new THREE.Vector3().getPositionFromMatrix(ROTATING.matrixWorld));
+
+                    ROTATING.finishRotation(intersectPoint.clone().normalize());
+                }
+                else {
+
+                    var pickedObject = getPickedObject();
+                    
+                    if ( PICKED != pickedObject ) {
+ 
+                         if ( PICKED ) {
+                            
+                            if ( PICKED.material.emissive ) {
+                                
+                                 PICKED.material.emissive.setHex( PICKED.oldEmissive );
+                             }
+                             else {
+                                 
+                                 PICKED.material.color.setHex( PICKED.oldColor );
+                             }
+                         }
+ 
+                         PICKED = pickedObject;
+ 
+                         if ( PICKED ) {
+                             
+                             if ( PICKED.material.emissive ) {
+                                 
+                                 PICKED.oldEmissive = PICKED.material.emissive.getHex();
+                                 PICKED.material.emissive.setHex( 0xff0000 );
+                             }
+                             else {
+                             
+                                 PICKED.oldColor = PICKED.material.color.getHex();
+                                 PICKED.material.color.setHex( 0xffff00 );
+                             }
+                         }
+                     }
+                    
+                }
+            }
+
+            function onDocumentMouseDown(event) {
+
+                event.preventDefault();
+
+                if (event.button == 0) {
+
+                    if (boxBuilder.isBuilding()) {
+
+                        boxBuilder.onLeftClick(mouse);
+                        return;
+                    }
+                    
+                    if (sketchFactory.isBuilding()) {
+                        
+                        sketchFactory.onLeftClick(mouse);
+                        window.parent.releaseSelection();
+                        return;
+                    }
+
+                    if (PICKED) {
+                        
+                        cameraController.noPan = true;
+                        cameraController.noRotate = true;
+
+                        var pickRef = (PICKED.pickRef !== undefined ? PICKED.pickRef : PICKED);
+
+                        if (arrowMode == "deleting") {
+                            PICKED.isDeleted = 1;
+                            PICKED.visible = false;
+                            PICKED.bbox.setVisibility(false);
+                            //objectScene.remove(PICKED);
+                            document.getElementById("dragging").click();
+                        }
+
+                        if (pickRef instanceof OSMEX.Block || pickRef.name === "undef") {
+
+                            SELECTED = pickRef;
+                            DRAGGING = pickRef;
+ 
+                            var vector = new THREE.Vector3(mouse.x, mouse.y, 0.5);
+                            projector.unprojectVector(vector, camera);
+                            var ray = new THREE.Ray(camera.position, vector.sub(camera.position).normalize());
+                            var intersectPoint = ray.intersectPlane(groundPlane);
+                            //var raycaster = new THREE.Raycaster( camera.position, vector.sub( camera.position ).normalize() );
+                            //var intersects = raycaster.intersectObject( gridPlane );
+                            offsetVector.copy(intersectPoint).sub(DRAGGING.position);
+                        }
+                        else if (pickRef instanceof OSMEX.SizerArrow) {
+
+                            SIZING = pickRef;
+
+                            var rotatedDir = SIZING.dir.clone();
+
+                            var matrixRotation = new THREE.Matrix4().extractRotation(SIZING.matrixWorld);
+                            var rotatedDir = SIZING.dir.clone().applyMatrix4(matrixRotation).normalize();
+                            var sizingPos = new THREE.Vector3().getPositionFromMatrix(SIZING.matrixWorld);
+                            var cameraDir = camera.position.clone().sub(sizingPos).normalize();
+                            var rightDir = cameraDir.clone().cross(rotatedDir).normalize();
+                            var forwardDir = rotatedDir.clone().cross(rightDir).normalize();
+                            actionPlane.setFromNormalAndCoplanarPoint(forwardDir, sizingPos);
+                            // TODO: situation when user is doing camera rotation while LMK pressed should be considered!
+
+                            sizerGizmo.setSizing(true);
+                        }
+                        else if (pickRef instanceof OSMEX.MovingArrow || pickRef instanceof OSMEX.MovingGizmoPlane) {
+
+                            MOVING = pickRef;
+
+                            if (pickRef instanceof OSMEX.MovingArrow) {
+
+                                var sizingPos = new THREE.Vector3().getPositionFromMatrix(MOVING.matrixWorld);
+                                var cameraDir = camera.position.clone().sub(sizingPos).normalize();
+                                var rightDir = cameraDir.clone().cross(MOVING.dir);
+                                var forwardDir = MOVING.dir.clone().cross(rightDir);
+                                actionPlane.setFromNormalAndCoplanarPoint(forwardDir, sizingPos);
+                            }
+                            else {
+
+                                var sizingPos = new THREE.Vector3().getPositionFromMatrix(MOVING.matrixWorld); 
+                                actionPlane.setFromNormalAndCoplanarPoint(MOVING.dir, sizingPos);
+                            }
+
+                            var vector = new THREE.Vector3(mouse.x, mouse.y, 0.5);
+                            projector.unprojectVector(vector, camera);
+                            var ray = new THREE.Ray(camera.position, vector.sub(camera.position).normalize());
+                            var intersectPoint = ray.intersectPlane(actionPlane);
+                            offsetVector.copy(intersectPoint).sub(new THREE.Vector3().getPositionFromMatrix(MOVING.matrixWorld)); 
+                        }
+                        else if (pickRef instanceof OSMEX.ScaleCube) {
+
+                            SCALING = pickRef;
+
+                        }
+                        else if (pickRef instanceof OSMEX.RotationTorus) {
+
+                            ROTATING = pickRef;
+
+                            var matrixRotation = new THREE.Matrix4().extractRotation(ROTATING.matrixWorld);
+                            var normal = ROTATING.dir.clone().applyMatrix4(matrixRotation).normalize();
+                            var rotationPos = new THREE.Vector3().getPositionFromMatrix(ROTATING.matrixWorld);
+                            actionPlane.setFromNormalAndCoplanarPoint(normal, rotationPos);
+                            // TODO: situation when user is doing camera rotation while LMK pressed should be considered!
+
+                            var vector = new THREE.Vector3(mouse.x, mouse.y, 0.5);
+                            projector.unprojectVector(vector, camera);
+                            var ray = new THREE.Ray(camera.position, vector.sub(camera.position).normalize());
+                            var intersectPoint = ray.intersectPlane(actionPlane);
+
+                            if (intersectPoint === undefined) {
+                                alert("RotationStart plane intersection problem!");
+                            }
+
+                            intersectPoint.sub(new THREE.Vector3().getPositionFromMatrix(ROTATING.matrixWorld));
+
+                            ROTATING.setStartRotationVector(intersectPoint.clone().normalize());
+
+                        }
+                        else {
+
+                            SELECTED = null;
+                        }
+                    }
+                    else {
+
+                        SELECTED = null;
+                    }
+                    if (arrowMode == "scaling")
+                        sizerGizmo.setTarget(SELECTED)
+                    else if (arrowMode == "moving")
+                        movingGizmo.setTarget(SELECTED);
+                    else if (arrowMode == "rotating")
+                        rotationGizmo.setTarget(SELECTED);
+
+                }
+            }
+
+            function onDocumentMouseUp(event) {
+
+                event.preventDefault();
+                if (event.button == 0) {
+                    
+                    cameraController.noPan = false;
+                    cameraController.noRotate = false;
+
+                    if ((DRAGGING || SIZING || SCALING || ROTATING || MOVING) && SELECTED.id != 0) {
+                        SELECTED.isModified = 1;
+                    }
+                    
+                    if (!SELECTED && boxBuilder.currentState ==  BoxBuilderState.NOT_STARTED) document.getElementById("dragging").click();
+
+                    if (SIZING) {
+
+                        SIZING.restoreDefaultLength();
+                        sizerGizmo.setSizing(false);
+                    }
+                    if (SCALING)
+                        SCALING.restoreDefaultScale();
+
+                    BUILDING = null;
+                    DRAGGING = null;
+                    SIZING = null;
+                    SCALING = null;
+                    ROTATING = null;
+                    MOVING = null;
+                }
+            }
+
+            function animate() {
+
+               requestAnimationFrame(animate);
+               
+               update();
+               render();
+            }
+
+            function update() {
+
+                cameraController.update();
+                rotationGizmo.update(camera);
+                sizerGizmo.update();
+                movingGizmo.update();
+            }
+
+            function onCameraChange() {
+
+                boxBuilder.update();
+            }
+
+
+            function render() {
+
+                renderer.clear();
+                renderer.render(objectScene, camera);
+
+                renderer.clear(false, true, false); // clear only Depth
+                renderer.render(interfaceScene, camera);
+            }
+
+        </script>
+
+    </body>
+</html>
